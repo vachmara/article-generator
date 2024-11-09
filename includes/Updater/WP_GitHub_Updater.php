@@ -223,10 +223,17 @@ class WP_GitHub_Updater {
 				$version = false;
 
 			if (is_array($raw_response)) {
-				if (empty($raw_response['body']))
+				if (empty($raw_response['body'])){
 					$version = false;
-				else
-					$version = json_decode( $raw_response['body'] )[0]->name;
+				}
+				else {
+					$versionArray = json_decode($raw_response['body'], true);
+					if (!empty($versionArray) && isset($versionArray[0]['name'])) {
+							$version = $versionArray[0]['name'];
+					} else {
+							$version = false;
+					}
+				}
 			}
 
 			// refresh every 6 hours

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json.schemastore.org/block.json",
+  "apiVersion": 2,
+  "title": "GPT Assistant Generation",
+  "name": "ag/gpt-assistant",
+  "category": "formatting",
+  "icon": "gpt-create-text",
+  "attributes": {
+    "prompt": {
+      "type": "string",
+      "default": ""
+    },
+    "file": {
+      "type": "string",
+      "default": ""
+    },
+    "toggleFile": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "example": {
+    "attributes": {
+      "prompt": "How many shares of AAPL were outstanding at the end of of October 2023?"
+    }
+  },
+  "supports": {
+    "html": false
+  },
+  "editorScript": "file:./index.js",
+  "style": "file:./style-index.css"
+}

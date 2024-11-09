@@ -53,7 +53,8 @@ class Manager {
     protected function register_block_metas(): void {
         $blocks = [
 			'ai-complete/',
-			'ai-gen-image'
+			'ai-gen-image',
+			'ai-assistant/'
         ];
 
         foreach ( $blocks as $block ) {

@@ -3,7 +3,6 @@
  */
 import { parse } from '@wordpress/blocks';
 import { __, sprintf } from '@wordpress/i18n';
-import OpenAI from 'openai';
 import { PanelBody } from '@wordpress/components';
 import Swal from 'sweetalert2';
 import { useState, useEffect } from '@wordpress/element';
@@ -240,7 +239,8 @@ export default function Prompt({ attributes, setAttributes }) {
 			continuous: false,
 			interimResults: false
 		});
-		setSpeechResponse(speechResult ?? null);
+
+		setSpeechResponse(typeof speechResult === 'object' ? speechResult : null)
 	}
 
 	return (
@@ -323,7 +323,6 @@ export default function Prompt({ attributes, setAttributes }) {
 						)}
 						value={context}
 						id="text-generator-context"
-						autoFocus
 						onChange={(context: IInputResponse) =>
 							setAttributes({ context: context.value })
 						}
@@ -370,7 +369,7 @@ export default function Prompt({ attributes, setAttributes }) {
 				<PanelBody
 					title={__('Settings', 'article-gen')}
 					initialOpen={false}
-					icon={'admin-settings'}
+					icon={'admin-settings' as any}
 				>
 					<div className="mb-6">
 						<label>

@@ -49,3 +49,18 @@ export async function createAssistantRun(
     throw new Error(errorMessase);
   }
 }
+
+export async function uploadFile(file: File): Promise<OpenAI.FileObject> {
+  const openai = await getOpenAi();
+  const fileUploaded = await openai.files.create({
+    file: file,
+    purpose: "assistants",
+  });
+  return fileUploaded;
+}
+
+export async function listAssistants(): Promise<OpenAI.Beta.Assistants.AssistantsPage> {
+  const openai = await getOpenAi();
+  const assistants = await openai.beta.assistants.list();
+  return assistants;
+}
