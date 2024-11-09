@@ -3,7 +3,7 @@
  */
 import { parse } from '@wordpress/blocks';
 import { __, sprintf } from '@wordpress/i18n';
-import { CreateCompletionRequest } from 'openai';
+import OpenAI from 'openai';
 import { PanelBody } from '@wordpress/components';
 import Swal from 'sweetalert2';
 import { useState, useEffect } from '@wordpress/element';
@@ -67,49 +67,49 @@ interface IHandlePopulate {
  * @see https://developer.wordpress.org/block-editor/developers/block-api/block-edit-save/#edit
  * @return {WPElement} Element to render.
  */
-export default function Prompt( { attributes, setAttributes } ) {
+export default function Prompt({ attributes, setAttributes }) {
 	const { prompt, context, toggleContext, toggleCustomContext } =
 		attributes as IAttributesProps;
-	const [ loading, setLoading ] = useState< boolean >( false );
-	const [ speechStatus, setSpeechStatus ] = useState< boolean >( false );
-	const [ speechResponse, setSpeechResponse ] =
-		useState< SpeechRecognition | null >( null );
-	const [ temperature, setTemperature ] = useState< number >( 0.6 );
-	const [ maxTokens, setMaxTokens ] = useState< number >( 2048 );
-	const [ model, setModel ] = useState< string >( 'text-davinci-003' );
+	const [loading, setLoading] = useState<boolean>(false);
+	const [speechStatus, setSpeechStatus] = useState<boolean>(false);
+	const [speechResponse, setSpeechResponse] =
+		useState<SpeechRecognition | null>(null);
+	const [temperature, setTemperature] = useState<number>(0.6);
+	const [maxTokens, setMaxTokens] = useState<number>(2048);
+	const [model, setModel] = useState<string>('text-davinci-003');
 	const contexts: IContext[] = useSelect(
-		( select ) => select( contextStore ).getContexts(),
+		(select) => select(contextStore).getContexts(),
 		[]
 	);
 
-	useEffect( () => {
-		if ( loading ) {
-			Swal.fire( {
-				title: __( 'Wait...', 'article-gen' ),
+	useEffect(() => {
+		if (loading) {
+			Swal.fire({
+				title: __('Wait...', 'article-gen'),
 				text: sprintf(
-					__( 'Writing text about: %s', 'article-gen' ),
+					__('Writing text about: %s', 'article-gen'),
 					prompt
 				),
 				icon: 'info',
 				toast: true,
 				position: 'center',
 				showConfirmButton: false,
-			} );
+			});
 		}
-	} );
+	});
 
 	/**
 	 * toggle contexts
 	 *
 	 * @param {boolean} action
 	 */
-	const toggleContexts = ( action: boolean ) => {
-		setAttributes( {
+	const toggleContexts = (action: boolean) => {
+		setAttributes({
 			toggleContext: action,
 			toggleCustomContext: toggleCustomContext
-				? ! action
+				? !action
 				: toggleCustomContext,
-		} );
+		});
 	};
 
 	/**
@@ -117,11 +117,11 @@ export default function Prompt( { attributes, setAttributes } ) {
 	 *
 	 * @param {boolean} action
 	 */
-	const toggleCustomContexts = ( action: boolean ) => {
-		setAttributes( {
+	const toggleCustomContexts = (action: boolean) => {
+		setAttributes({
 			toggleCustomContext: action,
-			toggleContext: toggleContext ? ! action : toggleContext,
-		} );
+			toggleContext: toggleContext ? !action : toggleContext,
+		});
 	};
 
 	/**
@@ -132,26 +132,26 @@ export default function Prompt( { attributes, setAttributes } ) {
 	 */
 	function handlePopulate(
 		{ prompt, context, options }: IHandlePopulate,
-		setLoading: React.Dispatch< React.SetStateAction< boolean > >
+		setLoading: React.Dispatch<React.SetStateAction<boolean>>
 	) {
-		setLoading( true );
-		createArticle( prompt, context, options )
-			.then( ( response ) => {
+		setLoading(true);
+		createArticle(prompt, context, options)
+			.then((response) => {
 				Swal.close(); // close all popups
 
-				const blocks = parse( response.content );
-				dispatch( 'core/block-editor' ).removeBlock(
-					select( 'core/block-editor' ).getSelectedBlockClientId() ??
-						''
+				const blocks = parse(response.content);
+				dispatch('core/block-editor').removeBlock(
+					select('core/block-editor').getSelectedBlockClientId() ??
+					''
 				);
-				dispatch( 'core/block-editor' ).insertBlocks( blocks );
+				dispatch('core/block-editor').insertBlocks(blocks);
 
 				// set title
-				writeEffectTitle( response.title );
-			} )
-			.catch( ( e ) => {
-				Swal.fire( {
-					title: __( 'Error', 'article-gen' ),
+				writeEffectTitle(response.title);
+			})
+			.catch((e) => {
+				Swal.fire({
+					title: __('Error', 'article-gen'),
 					text: e.message,
 					icon: 'error',
 					toast: true,
@@ -159,9 +159,9 @@ export default function Prompt( { attributes, setAttributes } ) {
 					showConfirmButton: false,
 					showCloseButton: true,
 					footer: getAlertCustomFooter(),
-				} );
-			} )
-			.finally( () => setLoading( false ) );
+				});
+			})
+			.finally(() => setLoading(false));
 	}
 
 	/**
@@ -169,21 +169,21 @@ export default function Prompt( { attributes, setAttributes } ) {
 	 *
 	 * @param {string} title
 	 */
-	function writeEffectTitle( title: string ) {
+	function writeEffectTitle(title: string) {
 		let current = 0;
 		const titleEnd = title.length - 1;
 		const titleSpeed = 10000 / title.length;
 
 		let titleAppend = '';
 
-		const titleInterval = setInterval( function () {
-			if ( current > titleEnd ) {
-				clearInterval( titleInterval );
+		const titleInterval = setInterval(function () {
+			if (current > titleEnd) {
+				clearInterval(titleInterval);
 			} else {
-				titleAppend += title[ current++ ];
-				dispatch( 'core/editor' ).editPost( { title: titleAppend } );
+				titleAppend += title[current++];
+				dispatch('core/editor').editPost({ title: titleAppend });
 			}
-		}, titleSpeed );
+		}, titleSpeed);
 	}
 
 	/**
@@ -193,15 +193,15 @@ export default function Prompt( { attributes, setAttributes } ) {
 	 */
 	function getAlertCustomFooter(): string {
 		return `
-      <a href="/wp-admin/admin.php?page=article-gen#/contexts">${ __(
+      <a href="/wp-admin/admin.php?page=article-gen#/contexts">${__(
 			'Contexts',
 			'article-gen'
-		) }</a>
+		)}</a>
       &nbsp;-&nbsp;
-      <a href="/wp-admin/admin.php?page=article-gen#/settings">${ __(
+      <a href="/wp-admin/admin.php?page=article-gen#/settings">${__(
 			'Settings',
 			'article-gen'
-		) }</a>
+		)}</a>
     `;
 	}
 
@@ -210,146 +210,148 @@ export default function Prompt( { attributes, setAttributes } ) {
 	 *
 	 * @param {string} attr
 	 */
-	function speechHandle( attr: string ) {
-		if ( ! speechStatus ) {
-			setSpeechStatus( true );
+	function speechHandle(attr: string) {
+		if (!speechStatus) {
+			setSpeechStatus(true);
 		} else {
-			setSpeechStatus( false );
-			if ( speechResponse ) {
+			setSpeechStatus(false);
+			if (speechResponse) {
 				speechResponse.abort();
 				return;
 			}
 		}
 
-		if ( attr === 'prompt' ) {
-			document.getElementById( 'text-generator-prompt' )?.focus();
-		} else if ( attr === 'context' ) {
-			document.getElementById( 'text-generator-context' )?.focus();
+		if (attr === 'prompt') {
+			document.getElementById('text-generator-prompt')?.focus();
+		} else if (attr === 'context') {
+			document.getElementById('text-generator-context')?.focus();
 		}
 
-		const speechResult = speech( {
-			resultCallback: ( t ) => {
-				if ( attr === 'prompt' ) {
-					setAttributes( { prompt: t } );
-				} else if ( attr === 'context' ) {
-					setAttributes( { context: t } );
+		const speechResult = speech({
+			resultCallback: (t) => {
+				if (attr === 'prompt') {
+					setAttributes({ prompt: t });
+				} else if (attr === 'context') {
+					setAttributes({ context: t });
 				}
 			},
-			endCallback: () => setSpeechStatus( false ),
-		} );
-		setSpeechResponse( speechResult ?? null );
+			endCallback: () => setSpeechStatus(false),
+			lang: '',
+			continuous: false,
+			interimResults: false
+		});
+		setSpeechResponse(speechResult ?? null);
 	}
 
 	return (
 		<div
-			{ ...useBlockProps() }
-			style={ {
+			{...useBlockProps()}
+			style={{
 				backgroundColor: '#ffffff',
 				padding: `20px 20px 20px 20px`,
-			} }
+			}}
 		>
 			<div className="block items-center relative">
 				<RichText
 					className="wp-block-article-generator-prompt flex-none focus:outline-none focus:ring focus:ring-primary"
 					tagName="h4"
-					placeholder={ __(
+					placeholder={__(
 						'Write the subject of the article',
 						'article-gen'
-					) }
+					)}
 					id="text-generator-prompt"
-					value={ prompt }
-					onChange={ ( prompt: string ) =>
-						setAttributes( { prompt } )
+					value={prompt}
+					onChange={(prompt: string) =>
+						setAttributes({ prompt })
 					}
 				/>
 				<Button
-					icon={ speechStatus ? faMicrophoneSlash : faMicrophone }
-					buttonCustomClass={ `w-[43px] h-10 absolute right-2 top-[20%] border-none flex justify-center items-center` }
-					type={ speechStatus ? 'success' : 'primary' }
+					icon={speechStatus ? faMicrophoneSlash : faMicrophone}
+					buttonCustomClass={`w-[43px] h-10 absolute right-2 top-[20%] border-none flex justify-center items-center`}
+					type={speechStatus ? 'success' : 'primary'}
 					iconCustomClass="block !px-0"
-					onClick={ () => speechHandle( 'prompt' ) }
+					onClick={() => speechHandle('prompt')}
 				/>
 			</div>
 
 			<div className="justify-between flex gap-5">
 				<label>
-					{ __( 'Enable pre written context', 'article-gen' ) }
+					{__('Enable pre written context', 'article-gen')}
 					<SwitchCheckbox
-						enabled={ toggleContext }
-						setEnabled={ toggleContexts }
+						enabled={toggleContext}
+						setEnabled={toggleContexts}
 					/>
 				</label>
 				<label>
-					{ __( 'Enable custom context', 'article-gen' ) }
+					{__('Enable custom context', 'article-gen')}
 					<SwitchCheckbox
-						enabled={ toggleCustomContext }
-						setEnabled={ toggleCustomContexts }
+						enabled={toggleCustomContext}
+						setEnabled={toggleCustomContexts}
 					/>
 				</label>
 			</div>
-			{ toggleContext && ! toggleCustomContext ? (
+			{toggleContext && !toggleCustomContext ? (
 				<>
 					<Select2Input
-						placeholder={ __( 'Select context', 'article-gen' ) }
-						defaultValue={ context }
-						options={ [
-							...contexts.map( ( data ) => {
+						placeholder={__('Select context', 'article-gen')}
+						defaultValue={context}
+						options={[
+							...contexts.map((data) => {
 								return {
 									label: data.title,
 									value: data.content,
 								};
-							} ),
-						] }
-						onChange={ ( input ) => {
-							setAttributes( { context: input.value } );
-						} }
+							}),
+						]}
+						onChange={(input) => {
+							setAttributes({ context: input.value });
+						}}
 					/>
 				</>
 			) : (
 				''
-			) }
+			)}
 
-			{ ! toggleContext && toggleCustomContext ? (
+			{!toggleContext && toggleCustomContext ? (
 				<div className="relative">
 					<Input
 						className="wp-block-article-generator-context focus:outline-none focus:ring focus:ring-primary"
-						style={ { marginTop: '10px' } }
-						placeholder={ __(
+						style={{ marginTop: '10px' }}
+						placeholder={__(
 							'Enter the context of this article (optional)',
 							'article-gen'
-						) }
-						value={ context }
+						)}
+						value={context}
 						id="text-generator-context"
 						autoFocus
-						onChange={ ( context: IInputResponse ) =>
-							setAttributes( { context: context.value } )
+						onChange={(context: IInputResponse) =>
+							setAttributes({ context: context.value })
 						}
 					/>
 					<Button
-						icon={ speechStatus ? faMicrophoneSlash : faMicrophone }
-						buttonCustomClass={ `w-7 h-7 absolute right-2 top-[34%] border-none flex justify-center items-center` }
-						type={ speechStatus ? 'success' : 'primary' }
-						iconCustomClass={ `block !px-0 absolute top-[20%] right-[30%] ${
-							speechStatus ? 'text-primary' : ''
-						}` }
-						onClick={ () => speechHandle( 'context' ) }
+						icon={speechStatus ? faMicrophoneSlash : faMicrophone}
+						buttonCustomClass={`w-7 h-7 absolute right-2 top-[34%] border-none flex justify-center items-center`}
+						type={speechStatus ? 'success' : 'primary'}
+						iconCustomClass={`block !px-0 absolute top-[20%] right-[30%] ${speechStatus ? 'text-primary' : ''
+							}`}
+						onClick={() => speechHandle('context')}
 					/>
 				</div>
 			) : (
 				''
-			) }
+			)}
 			<Button
 				text={
 					loading
-						? __( 'Generating...', 'article-gen' )
-						: __( 'Generate', 'article-gen' )
+						? __('Generating...', 'article-gen')
+						: __('Generate', 'article-gen')
 				}
 				buttonCustomClass="article-gen-btn"
-				disabled={ loading }
+				disabled={loading}
 				iconCustomClass="btn-icon"
 				type="primary"
-				icon={ faMarker }
-				onClick={ () =>
+				icon={faMarker}
+				onClick={() =>
 					handlePopulate(
 						{
 							prompt: prompt,
@@ -366,102 +368,102 @@ export default function Prompt( { attributes, setAttributes } ) {
 			/>
 			<InspectorControls>
 				<PanelBody
-					title={ __( 'Settings', 'article-gen' ) }
-					initialOpen={ false }
-					icon={ 'admin-settings' }
+					title={__('Settings', 'article-gen')}
+					initialOpen={false}
+					icon={'admin-settings'}
 				>
 					<div className="mb-6">
 						<label>
-							{ __( 'Temperature', 'article-gen' ) }:{ ' ' }
-							<strong> { temperature } </strong>
+							{__('Temperature', 'article-gen')}:{' '}
+							<strong> {temperature} </strong>
 							<div>
 								<input
 									className="w-full h-2 mb-5 rounded-lg appearance-none cursor-pointer bg-gray"
-									min={ 0 }
-									max={ 2 }
+									min={0}
+									max={2}
 									type="range"
 									step="0.1"
-									value={ temperature }
-									onChange={ ( event ) => {
+									value={temperature}
+									onChange={(event) => {
 										setTemperature(
-											Number( event.target.value )
+											Number(event.target.value)
 										);
-									} }
+									}}
 								/>
 							</div>
 							<small>
-								{ __(
+								{__(
 									'What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.',
 									'article-gen'
-								) }
+								)}
 							</small>
 						</label>
 					</div>
 					<div className="mb-6">
 						<label>
-							{ __( 'Max Tokens', 'article-gen' ) }:{ ' ' }
-							<strong>{ maxTokens }</strong>
+							{__('Max Tokens', 'article-gen')}:{' '}
+							<strong>{maxTokens}</strong>
 							<div>
 								<input
 									className="w-full h-2 mb-5 rounded-lg appearance-none cursor-pointer bg-gray"
-									min={ 256 }
-									max={ 4096 }
+									min={256}
+									max={4096}
 									type="range"
 									step="1"
-									value={ maxTokens }
-									onChange={ ( event ) => {
+									value={maxTokens}
+									onChange={(event) => {
 										setMaxTokens(
-											Number( event.target.value )
+											Number(event.target.value)
 										);
-									} }
+									}}
 								/>
 							</div>
 							<small>
-								{ __(
+								{__(
 									"The token count of your prompt plus max_tokens cannot exceed the model's context length. Most models have a context length of 2048 tokens",
 									'article-gen'
-								) }
+								)}
 							</small>
 						</label>
 					</div>
 					<div className="mb-6">
 						<label>
-							{ __( 'Model', 'article-gen' ) }:{ ' ' }
-							<strong>{ model }</strong>
+							{__('Model', 'article-gen')}:{' '}
+							<strong>{model}</strong>
 							<div className="mt-2">
-								<Select2Input 
+								<Select2Input
 									defaultValue={model}
 									isMulti={false}
-									onChange={ input => setModel( input.value ) }
+									onChange={input => setModel(input.value)}
 									options={[
-										{ 
+										{
 											label: 'Davinci 003',
 											value: 'text-davinci-003'
 										},
-										{ 
+										{
 											label: 'Davinci 002',
 											value: 'text-davinci-002'
 										},
 										{
-											label: 'Curie', 
+											label: 'Curie',
 											value: 'text-curie-001'
 										},
 										{
-											label: 'Babbage', 
+											label: 'Babbage',
 											value: 'text-babbage-001'
 										},
 										{
-											label: 'Ada', 
+											label: 'Ada',
 											value: 'text-ada-001'
 										}
 									]}
 								/>
 							</div>
 							<small>
-								{ __(
+								{__(
 									"The OpenAI API is powered by a diverse set of models with different capabilities and price points.",
 									'article-gen'
-								) }
+								)}
 							</small>
 						</label>
 					</div>

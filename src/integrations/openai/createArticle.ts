@@ -1,69 +1,65 @@
-import { CreateCompletionRequest } from 'openai';
-import { getOpenAi } from './OpenAi';
-import { __ } from '@wordpress/i18n';
+import OpenAI from "openai";
+import { getOpenAi } from "./OpenAi";
+import { __ } from "@wordpress/i18n";
 
 export interface IArticlePopulate {
-	title: string;
-	content: string;
+  title: string;
+  content: string;
 }
 
-export type ICreateArticleOptions = Pick< 
-	CreateCompletionRequest, 
-	'temperature' |
-	'max_tokens' |
-	'model'
->
+export type ICreateArticleOptions = Pick<
+  OpenAI.CompletionCreateParams,
+  "temperature" | "max_tokens" | "model"
+>;
 
 export async function createArticle(
-	subject: string,
-	context?: string,
-	options?: ICreateArticleOptions
-): Promise< IArticlePopulate > {
-	if ( subject.trim().length === 0 ) {
-		throw new Error( __( 'Please enter a valid prompt', 'article-gen' ) );
-	}
+  subject: string,
+  context?: string,
+  options?: ICreateArticleOptions
+): Promise<IArticlePopulate> {
+  if (subject.trim().length === 0) {
+    throw new Error(__("Please enter a valid prompt", "article-gen"));
+  }
 
-	try {
+  try {
+    const openai = await getOpenAi();
 
-		const parseOptions = {
-			model: 'text-davinci-003',
-			prompt: generateArticlePrompt( subject, context ),
-			temperature: 0.6,
-			max_tokens: 3024,
-			user: (window as any)?.userSettings?.uid,
-			n: 1,
-			stop: '[CONTENT_END]',
-			...options,
-		}
-		// Gera o artigo a partir do texto inicial
-		const response = await (
-			await getOpenAi()
-		 ).createCompletion( parseOptions );
-		// Retorna o texto do artigo gerado separado em titulo e conteúdo
-		return extractTitleAndContent(
-			response.data.choices[ 0 ].text as string
-		);
-	} catch ( error: Error | any ) {
-		// Trata possíveis erros durante a geração do artigo
-		console.info( { error } );
-		const errorMessase =
-			error.response.data.error.message ||
-			__(
-				`Failed to generate article. Make sure you entered the API Key in the settings`,
-				'article-gen'
-			);
-		throw new Error( errorMessase );
-	}
+    const parseOptions = {
+      model: "text-davinci-003",
+      prompt: generateArticlePrompt(subject, context),
+      temperature: 0.6,
+      max_tokens: 3024,
+      user: (window as any)?.userSettings?.uid,
+      n: 1,
+      stop: "[CONTENT_END]",
+      ...options,
+    };
+    // Gera o artigo a partir do texto inicial
+    const response = await openai.completions.create(parseOptions);
+
+    // Retorna o texto do artigo gerado separado em titulo e conteúdo
+    return extractTitleAndContent(response.choices[0].text as string);
+  } catch (error: Error | any) {
+    // Trata possíveis erros durante a geração do artigo
+    console.info({ error });
+    const errorMessase =
+      error.response.data.error.message ||
+      __(
+        `Failed to generate article. Make sure you entered the API Key in the settings`,
+        "article-gen"
+      );
+    throw new Error(errorMessase);
+  }
 }
 
-function generateArticlePrompt( subject: string, context?: string ): string {
-	let prompt = `Write an article about ${ subject }.`;
+function generateArticlePrompt(subject: string, context?: string): string {
+  let prompt = `Write an article about ${subject}.`;
 
-	if ( context ) {
-		prompt += `\n\ncontext: ${ context }\n\n`;
-	}
+  if (context) {
+    prompt += `\n\ncontext: ${context}\n\n`;
+  }
 
-	prompt += `
+  prompt += `
       
     Title: 
     - Make the title catchy and interesting.
@@ -77,25 +73,25 @@ function generateArticlePrompt( subject: string, context?: string ): string {
     - End the article with a conclusion and a call to action.
     `;
 
-	return prompt;
+  return prompt;
 }
 
-function extractTitleAndContent( response: string ): IArticlePopulate {
-	const titleStartIndex =
-		response.indexOf( '[TITLE_START]' ) + '[TITLE_START]'.length;
-	const titleEndIndex = response.indexOf( '[TITLE_END]' );
-	const title = response.slice( titleStartIndex, titleEndIndex ).trim();
+function extractTitleAndContent(response: string): IArticlePopulate {
+  const titleStartIndex =
+    response.indexOf("[TITLE_START]") + "[TITLE_START]".length;
+  const titleEndIndex = response.indexOf("[TITLE_END]");
+  const title = response.slice(titleStartIndex, titleEndIndex).trim();
 
-	const contentStartIndex =
-		response.indexOf( '[CONTENT_START]' ) + '[CONTENT_START]'.length;
-	const contentEndIndex = response.indexOf( '[CONTENT_END]' );
-	const content = `<!-- wp:paragraph -->${ response
-		.slice( contentStartIndex, contentEndIndex )
-		.trim()
-		.replace(
-			/[\r\n\v\f\u2028\u2029]+/g,
-			'<!-- /wp:paragraph --><!-- wp:paragraph -->'
-		) }<!-- /wp:paragraph -->`;
+  const contentStartIndex =
+    response.indexOf("[CONTENT_START]") + "[CONTENT_START]".length;
+  const contentEndIndex = response.indexOf("[CONTENT_END]");
+  const content = `<!-- wp:paragraph -->${response
+    .slice(contentStartIndex, contentEndIndex)
+    .trim()
+    .replace(
+      /[\r\n\v\f\u2028\u2029]+/g,
+      "<!-- /wp:paragraph --><!-- wp:paragraph -->"
+    )}<!-- /wp:paragraph -->`;
 
-	return { title, content };
+  return { title, content };
 }

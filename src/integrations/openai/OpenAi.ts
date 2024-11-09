@@ -1,5 +1,6 @@
-import { OpenAIApi } from 'openai';
+import OpenAI from 'openai';
 import openAiSettings from './Settings';
 
 // construct open ai instance
-export const getOpenAi = async () => new OpenAIApi( await openAiSettings() );
+// @ts-expect-error - openAiSettings returns a promise ClientsOptions not alias OpenAI
+export const getOpenAi = async () => new OpenAI( await openAiSettings() );
