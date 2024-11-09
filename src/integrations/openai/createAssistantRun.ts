@@ -48,6 +48,7 @@ export async function createAssistantRun(
       __("Failed to create assistant run", "article-gen");
     throw new Error(errorMessase);
   }
+  return { text: "", citations: [] };
 }
 
 export async function uploadFile(file: File): Promise<OpenAI.FileObject> {

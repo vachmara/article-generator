@@ -26,6 +26,7 @@ import {
 } from "../../integrations/openai/createAssistantRun";
 import Select2Input, { Select2SingleRow } from '../../components/inputs/Select2Input';
 import speech from "../../integrations/speechRecognition/speech";
+import { dispatch, select } from "@wordpress/data";
 
 /**
  * Interface attributes props
@@ -37,6 +38,14 @@ interface IAttributesProps {
   prompt?: string;
   file?: File;
   toggleFile?: boolean;
+}
+
+/**
+ * Interface to define parameters for populate handling
+ */
+interface IHandlePopulate {
+  prompt: string;
+  assistantId: string;
 }
 
 /**
@@ -83,6 +92,89 @@ export default function Edit({
 
   const setToggleFile = (toggle: boolean) => {
     setAttributes({ toggleFile: toggle });
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    // Check if the file type is accept=".doc,.docx,.pdf,.txt,.html,.md"
+    if (!['application/msword', 'application/pdf', 'text/plain', 'text/html', 'text/markdown'].includes(file?.type ?? ""))
+      return;
+
+    if (file) {
+      setAttributes({ file });
+    }
+  }
+
+  /**
+   * Handle populate post
+   *
+   * @param {IHandlePopulate} param - The parameters for populating post
+   * @param {React.Dispatch<React.SetStateAction<boolean>>} setLoading - Function to set loading state
+   */
+  async function handlePopulate(
+    { prompt, assistantId }: IHandlePopulate,
+    setLoading: React.Dispatch<React.SetStateAction<boolean>>
+  ) {
+    try {
+      setLoading(true);
+
+      // Upload the file if toggleFile is enabled and file is provided
+      let uploadedFileId = null;
+      if (toggleFile && file) {
+        const uploadedFile = await uploadFile(file);
+        uploadedFileId = uploadedFile.id;
+      }
+
+      // Including the prompt in options as a necessary parameter
+      const runOptions = {
+        assistant_id: assistantId,
+        messages: [uploadedFileId ? { role: "user", content: prompt } : { role: "user", content: prompt, attachements: [{ file_id: uploadedFileId, tools: [{ type: "file_search" }] }] }],
+      };
+
+      const { text, citations } = await createAssistantRun(assistantId, runOptions);
+
+      console.log({ text, citations });
+      Swal.close(); // close all popups
+
+      const blocks = parse(text);
+      dispatch("core/block-editor").removeBlock(
+        select("core/block-editor").getSelectedBlockClientId() ?? ""
+      );
+      dispatch("core/block-editor").insertBlocks(blocks);
+
+    } catch (e: any) {
+      Swal.fire({
+        title: __("Error", "article-gen"),
+        text: e.message,
+        icon: "error",
+        toast: true,
+        position: "bottom",
+        showConfirmButton: false,
+        showCloseButton: true,
+      });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  /**
+   * Handle generation
+   */
+  function handleGeneration() {
+    if (!prompt || !assistantId) {
+      Swal.fire({
+        title: __("Error", "article-gen"),
+        text: __("Please fill the prompt and select an assistant", "article-gen"),
+        icon: "error",
+        toast: true,
+        position: "bottom",
+        showConfirmButton: false,
+        showCloseButton: true,
+      });
+      return;
+    }
+
+    handlePopulate({ prompt, assistantId }, setLoading)
   }
 
   /**
@@ -163,6 +255,16 @@ export default function Edit({
         </label>
       </div>
 
+      {toggleFile && (
+        <div className="mt-6">
+          <input
+            type="file"
+            accept=".doc,.docx,.pdf,.txt,.html,.md"
+            onChange={handleFileChange}
+          />
+        </div>
+      )}
+
       <Button
         text={
           loading
@@ -174,8 +276,8 @@ export default function Edit({
         iconCustomClass="btn-icon"
         type="primary"
         icon={faMarker}
-        onClick={() => { }
-        }
+        onClick={handleGeneration}
+
       />
       <InspectorControls>
         <PanelBody
@@ -200,7 +302,7 @@ export default function Edit({
               </div>
               <small>
                 {__(
-                  "The OpenAI API is powered by a diverse set of models with different capabilities and price points.",
+                  "OpenAI assistant can be created from the OpenAI playground",
                   'article-gen'
                 )}
               </small>

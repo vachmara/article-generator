@@ -19,5 +19,6 @@ export default async function openAiSettings(): Promise<ClientOptions> {
   return {
     apiKey: apiKey.value,
     organization: organizationID.value,
-  } as ClientOptions;
+    dangerouslyAllowBrowser: true,
+  } as unknown as ClientOptions;
 }
