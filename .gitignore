@@ -9,3 +9,4 @@
 *error.log
 *.lock
 *-lock.json
+pnpm-lock.yaml
