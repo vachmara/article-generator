@@ -87,6 +87,7 @@ export default function Edit({
   useEffect(() => {
     listAssistants().then((response) => {
       setAssistants(response);
+      setAssistantId(response.data[0].id);
     });
   }, []);
 
@@ -126,12 +127,14 @@ export default function Edit({
       }
 
       // Including the prompt in options as a necessary parameter
-      const runOptions = {
+      const runOptions: OpenAI.Beta.ThreadCreateAndRunParamsNonStreaming = {
         assistant_id: assistantId,
-        messages: [uploadedFileId ? { role: "user", content: prompt } : { role: "user", content: prompt, attachements: [{ file_id: uploadedFileId, tools: [{ type: "file_search" }] }] }],
+        thread: {
+          messages: [{ role: "user", content: prompt, attachments: uploadedFileId ? [{ tools: [{ type: "file_search" }], file_id: uploadedFileId }] : [] }],
+        }
       };
 
-      const { text, citations } = await createAssistantRun(assistantId, runOptions);
+      const { text, citations } = await createAssistantRun(runOptions);
 
       console.log({ text, citations });
       Swal.close(); // close all popups

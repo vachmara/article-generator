@@ -3,15 +3,11 @@ import { getOpenAi } from "./OpenAi";
 import OpenAI from "openai";
 
 export async function createAssistantRun(
-  assistant_id: string,
-  options?: OpenAI.Beta.ThreadCreateAndRunParamsNonStreaming
+  options: OpenAI.Beta.ThreadCreateAndRunParamsNonStreaming
 ) {
   try {
     const openai = await getOpenAi();
-    const run = await openai.beta.threads.createAndRunPoll({
-      assistant_id,
-      ...options,
-    });
+    const run = await openai.beta.threads.createAndRunPoll(options);
 
     if (run.status !== "completed") {
       throw new Error(__("Failed to create assistant run", "article-gen"));
