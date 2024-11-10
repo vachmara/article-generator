@@ -8,7 +8,7 @@
  * Requires PHP:      8.0
  * Version:           ARTICLEGEN_SINCE
  * Tested upto:       6.2
- * Author:            Cleisson Barbosa<cleissonbarbosa68@gmail.com>
+ * Author:            Cleisson Barbosa<cleissonbarbosa68@gmail.com>, Valentin Chmara<valentinchmara@gmail.com>
  * Author URI:        https://github.com/cleissonbarbosa
  * License:           MIT
  * License URI:       https://github.com/cleissonbarbosa/article-generator/blob/master/LICENSE.txt

@@ -1,6 +1,6 @@
 {
 	"name": "article-gen",
-	"version": "0.8.0",
+	"version": "1.0.0",
 	"description": "A simple starter kit to work in WordPress plugin development using WordPress Rest API, WP-script and many more...",
 	"main": "src/index.tsx",
 	"scripts": {
@@ -20,6 +20,9 @@
 		"release": "yarn build && yarn makepot && yarn zip"
 	},
 	"author": "Cleisson Barbosa <cleissonbarbosa68@gmail.com>",
+	"contributors": [
+		"Valentin Chmara <valentinchmara@gmail.com> (https://github.com/vachmara/)"
+	],
 	"license": "ISC",
 	"devDependencies": {
 		"@babel/preset-typescript": "^7.18.6",
